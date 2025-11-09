@@ -483,12 +483,20 @@ def github_qa():
         return jsonify({'error': 'Q&A request failed', 'details': str(e)}), 503
 
 if __name__ == '__main__':
-    print("="*60)
-    print("Starting AI Chat & Repository Explorer Server...")
-    print("✓ Internet Search AI (DuckDuckGo)")
-    print("✓ GitHub Repository Analysis")
-    print("✓ AI-Powered Code Insights")
-    print("="*60)
-    print("\nOpen http://localhost:5000 in your browser")
-    print(f"Node.js backend: {NODE_BACKEND_URL}\n")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Get port from environment variable (Render sets PORT automatically)
+    port = int(os.getenv('PORT', 5000))
+    # Check if running in production
+    is_production = os.getenv('RENDER', False)
+    
+    if not is_production:
+        print("="*60)
+        print("Starting AI Chat & Repository Explorer Server...")
+        print("✓ Internet Search AI (DuckDuckGo)")
+        print("✓ GitHub Repository Analysis")
+        print("✓ AI-Powered Code Insights")
+        print("="*60)
+        print("\nOpen http://localhost:5000 in your browser")
+        print(f"Node.js backend: {NODE_BACKEND_URL}\n")
+    
+    # Use debug mode only in development
+    app.run(debug=not is_production, host='0.0.0.0', port=port)
