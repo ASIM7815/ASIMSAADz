@@ -1,30 +1,125 @@
 // Code Upload and Analysis JavaScript
 // Handles local folder upload and code analysis
 
-// Allowed code file extensions
+// Allowed code file extensions - comprehensive list
 const CODE_EXTENSIONS = [
-    '.js', '.jsx', '.ts', '.tsx',           // JavaScript/TypeScript
-    '.py', '.pyw',                          // Python
-    '.java',                                // Java
-    '.cpp', '.c', '.h', '.hpp', '.cc',     // C/C++
-    '.cs',                                  // C#
-    '.go',                                  // Go
-    '.rs',                                  // Rust
-    '.rb',                                  // Ruby
-    '.php',                                 // PHP
-    '.swift',                               // Swift
-    '.kt', '.kts',                          // Kotlin
-    '.scala',                               // Scala
-    '.html', '.htm',                        // HTML
-    '.css', '.scss', '.sass', '.less',     // CSS
-    '.json', '.xml', '.yaml', '.yml',      // Config
-    '.md', '.txt',                          // Documentation
-    '.sh', '.bash', '.bat', '.ps1',        // Scripts
-    '.sql',                                 // SQL
-    '.r',                                   // R
-    '.dart',                                // Dart
-    '.lua',                                 // Lua
-    '.vue'                                  // Vue
+    // JavaScript/TypeScript
+    '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs',
+    
+    // Python
+    '.py', '.pyw', '.pyx', '.pyi',
+    
+    // Java/JVM
+    '.java', '.class', '.jar', '.gradle', '.kt', '.kts', '.scala', '.groovy',
+    
+    // C/C++
+    '.c', '.cpp', '.cc', '.cxx', '.h', '.hpp', '.hxx', '.hh',
+    
+    // C#/.NET
+    '.cs', '.vb', '.fs', '.fsx',
+    
+    // Go
+    '.go', '.mod', '.sum',
+    
+    // Rust
+    '.rs', '.toml',
+    
+    // Ruby
+    '.rb', '.rake', '.gemspec',
+    
+    // PHP
+    '.php', '.phtml', '.php3', '.php4', '.php5', '.phps',
+    
+    // Swift/Objective-C
+    '.swift', '.m', '.mm',
+    
+    // Web Development
+    '.html', '.htm', '.xhtml', '.shtml',
+    '.css', '.scss', '.sass', '.less', '.styl',
+    '.vue', '.svelte',
+    
+    // Configuration & Data
+    '.json', '.json5', '.jsonc',
+    '.xml', '.xaml', '.xsd', '.xsl', '.xslt',
+    '.yaml', '.yml',
+    '.toml', '.ini', '.cfg', '.conf',
+    '.env', '.properties',
+    
+    // Documentation
+    '.md', '.markdown', '.rst', '.txt', '.text',
+    '.adoc', '.asciidoc',
+    
+    // Shell/Scripts
+    '.sh', '.bash', '.zsh', '.fish',
+    '.bat', '.cmd', '.ps1', '.psm1',
+    
+    // Database
+    '.sql', '.mysql', '.pgsql', '.sqlite',
+    
+    // Other Languages
+    '.r', '.R', '.rmd',                    // R
+    '.dart',                               // Dart
+    '.lua',                                // Lua
+    '.pl', '.pm', '.t',                    // Perl
+    '.ex', '.exs', '.eex',                 // Elixir
+    '.erl', '.hrl',                        // Erlang
+    '.clj', '.cljs', '.cljc', '.edn',     // Clojure
+    '.lisp', '.lsp', '.cl',               // Lisp
+    '.hs', '.lhs',                         // Haskell
+    '.ml', '.mli',                         // OCaml
+    '.nim',                                // Nim
+    '.cr',                                 // Crystal
+    '.v', '.vh', '.sv', '.svh',           // Verilog/SystemVerilog
+    '.vhd', '.vhdl',                       // VHDL
+    '.asm', '.s',                          // Assembly
+    '.f', '.f90', '.f95', '.for',         // Fortran
+    '.pas', '.pp',                         // Pascal
+    '.d',                                  // D
+    '.jl',                                 // Julia
+    '.sol',                                // Solidity
+    '.proto',                              // Protocol Buffers
+    '.graphql', '.gql',                    // GraphQL
+    '.tf', '.tfvars',                      // Terraform
+    
+    // Build & Config Files
+    '.dockerfile', '.dockerignore',
+    '.makefile', '.mk',
+    '.cmake',
+    '.gradle',
+    '.maven',
+    '.npmrc', '.yarnrc',
+    '.eslintrc', '.prettierrc',
+    '.babelrc',
+    '.gitignore', '.gitattributes',
+    
+    // Misc
+    '.tex',                                // LaTeX
+    '.bib',                                // BibTeX
+    '.log'                                 // Logs
+];
+
+// Blocked extensions (media files, executables, archives)
+const BLOCKED_EXTENSIONS = [
+    // Images
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.ico', '.webp', '.tiff', '.psd', '.raw',
+    
+    // Videos
+    '.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm', '.m4v', '.mpeg', '.mpg', '.3gp',
+    
+    // Audio
+    '.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma', '.m4a', '.opus',
+    
+    // Archives
+    '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz', '.iso',
+    
+    // Executables
+    '.exe', '.dll', '.so', '.dylib', '.bin', '.app', '.dmg', '.msi',
+    
+    // Documents (non-code)
+    '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.odt', '.ods', '.odp',
+    
+    // Fonts
+    '.ttf', '.otf', '.woff', '.woff2', '.eot'
 ];
 
 let uploadedFiles = [];
@@ -58,18 +153,43 @@ async function handleFolderUpload(event) {
         return;
     }
 
-    // Filter only code files
+    // Filter files - allow code files, block media/executables
     uploadedFiles = files.filter(file => {
-        const ext = getFileExtension(file.name);
-        return CODE_EXTENSIONS.includes(ext);
+        const ext = getFileExtension(file.name).toLowerCase();
+        
+        // Block media and executable files explicitly
+        if (BLOCKED_EXTENSIONS.includes(ext)) {
+            return false;
+        }
+        
+        // Allow code files
+        if (CODE_EXTENSIONS.includes(ext)) {
+            return true;
+        }
+        
+        // Allow files without extension (like Makefile, Dockerfile)
+        if (ext === '' && !file.name.includes('.')) {
+            return true;
+        }
+        
+        return false;
     });
 
+    const blockedCount = files.length - uploadedFiles.length;
+
     if (uploadedFiles.length === 0) {
-        addBotMessage('❌ No code files found in the selected folder. Please upload a folder containing code files.');
+        addBotMessage('❌ No code files found in the selected folder. Please upload a folder containing programming files.');
+        if (blockedCount > 0) {
+            addBotMessage(`ℹ️ ${blockedCount} non-code files were filtered out (images, videos, executables, etc.)`);
+        }
         return;
     }
 
     addBotMessage(`📁 Found ${uploadedFiles.length} code files. Starting analysis...`);
+    
+    if (blockedCount > 0) {
+        addBotMessage(`ℹ️ Filtered out ${blockedCount} non-code files (images, videos, etc.)`);
+    }
     
     // Start analysis
     await analyzeUploadedCode();
@@ -258,33 +378,94 @@ function getFileExtension(filename) {
 
 function mapExtensionToLanguage(ext) {
     const map = {
-        '.js': 'JavaScript', '.jsx': 'JavaScript', '.ts': 'TypeScript', '.tsx': 'TypeScript',
-        '.py': 'Python', '.pyw': 'Python',
-        '.java': 'Java',
-        '.cpp': 'C++', '.cc': 'C++', '.c': 'C', '.h': 'C/C++', '.hpp': 'C++',
-        '.cs': 'C#',
-        '.go': 'Go',
-        '.rs': 'Rust',
-        '.rb': 'Ruby',
-        '.php': 'PHP',
-        '.swift': 'Swift',
+        // JavaScript/TypeScript
+        '.js': 'JavaScript', '.jsx': 'JavaScript', '.mjs': 'JavaScript', '.cjs': 'JavaScript',
+        '.ts': 'TypeScript', '.tsx': 'TypeScript',
+        
+        // Python
+        '.py': 'Python', '.pyw': 'Python', '.pyx': 'Python', '.pyi': 'Python',
+        
+        // Java/JVM
+        '.java': 'Java', '.class': 'Java', '.jar': 'Java',
         '.kt': 'Kotlin', '.kts': 'Kotlin',
         '.scala': 'Scala',
-        '.html': 'HTML', '.htm': 'HTML',
+        '.groovy': 'Groovy', '.gradle': 'Gradle',
+        
+        // C/C++
+        '.c': 'C', '.h': 'C/C++',
+        '.cpp': 'C++', '.cc': 'C++', '.cxx': 'C++', '.hpp': 'C++', '.hxx': 'C++',
+        
+        // C#/.NET
+        '.cs': 'C#', '.vb': 'Visual Basic', '.fs': 'F#',
+        
+        // Go
+        '.go': 'Go', '.mod': 'Go Module', '.sum': 'Go',
+        
+        // Rust
+        '.rs': 'Rust', '.toml': 'TOML',
+        
+        // Ruby
+        '.rb': 'Ruby', '.rake': 'Ruby', '.gemspec': 'Ruby',
+        
+        // PHP
+        '.php': 'PHP', '.phtml': 'PHP',
+        
+        // Swift/Objective-C
+        '.swift': 'Swift', '.m': 'Objective-C', '.mm': 'Objective-C++',
+        
+        // Web
+        '.html': 'HTML', '.htm': 'HTML', '.xhtml': 'XHTML',
         '.css': 'CSS', '.scss': 'SCSS', '.sass': 'Sass', '.less': 'Less',
-        '.json': 'JSON',
-        '.xml': 'XML',
+        '.vue': 'Vue', '.svelte': 'Svelte',
+        
+        // Config & Data
+        '.json': 'JSON', '.json5': 'JSON5', '.jsonc': 'JSON',
+        '.xml': 'XML', '.xaml': 'XAML',
         '.yaml': 'YAML', '.yml': 'YAML',
-        '.md': 'Markdown',
-        '.txt': 'Text',
-        '.sh': 'Shell', '.bash': 'Bash', '.bat': 'Batch', '.ps1': 'PowerShell',
-        '.sql': 'SQL',
-        '.r': 'R',
+        '.ini': 'INI', '.cfg': 'Config', '.conf': 'Config',
+        '.env': 'Environment',
+        
+        // Documentation
+        '.md': 'Markdown', '.markdown': 'Markdown',
+        '.rst': 'reStructuredText', '.txt': 'Text',
+        
+        // Shell/Scripts
+        '.sh': 'Shell', '.bash': 'Bash', '.zsh': 'Zsh',
+        '.bat': 'Batch', '.cmd': 'Batch', '.ps1': 'PowerShell',
+        
+        // Database
+        '.sql': 'SQL', '.mysql': 'MySQL', '.pgsql': 'PostgreSQL',
+        
+        // Other Languages
+        '.r': 'R', '.R': 'R',
         '.dart': 'Dart',
         '.lua': 'Lua',
-        '.vue': 'Vue'
+        '.pl': 'Perl', '.pm': 'Perl',
+        '.ex': 'Elixir', '.exs': 'Elixir',
+        '.erl': 'Erlang',
+        '.clj': 'Clojure', '.cljs': 'ClojureScript',
+        '.lisp': 'Lisp', '.cl': 'Common Lisp',
+        '.hs': 'Haskell',
+        '.ml': 'OCaml',
+        '.nim': 'Nim',
+        '.cr': 'Crystal',
+        '.v': 'Verilog', '.sv': 'SystemVerilog',
+        '.vhd': 'VHDL', '.vhdl': 'VHDL',
+        '.asm': 'Assembly', '.s': 'Assembly',
+        '.f': 'Fortran', '.f90': 'Fortran',
+        '.pas': 'Pascal',
+        '.d': 'D',
+        '.jl': 'Julia',
+        '.sol': 'Solidity',
+        '.proto': 'Protocol Buffers',
+        '.graphql': 'GraphQL', '.gql': 'GraphQL',
+        '.tf': 'Terraform', '.tfvars': 'Terraform',
+        '.dockerfile': 'Docker',
+        '.makefile': 'Makefile', '.mk': 'Makefile',
+        '.cmake': 'CMake',
+        '.tex': 'LaTeX'
     };
-    return map[ext] || 'Other';
+    return map[ext.toLowerCase()] || 'Other';
 }
 
 function getDirectoryName(path) {

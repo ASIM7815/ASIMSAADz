@@ -15,7 +15,7 @@ git push -u origin main
 3. Connect your GitHub repo
 4. Use these settings:
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app`
+   - **Start Command**: `cc`
    - **Instance Type**: Free
 
 ## Step 3: Done! 🎉
